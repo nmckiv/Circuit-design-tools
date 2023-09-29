@@ -1,22 +1,14 @@
-//Attempt #1
-
-//Program to provide inout logic for a finite state machine
+//V1
+//Program to provide input and output logic for a finite state machine
 //Desired functionality: Accepts a user description of the desired states, inputs, outputs, and transition conditions in either mealy or moore format
-//Returns flip-flop input logic
+//Returns flip-flop input and output logic
 //User declares whether to use D, T, or JK flip flops
-
-//Moore state struct: Consists of a name, output, transition destinations, transition conditions, and Q values
-//Mealy state struct: Consists of a name, transition destinations, transition outputs, transition conditions, and Q values
-
-//Bubble diagram class: A collection (vector) of states
 
 using namespace std;
 #include <string>
 #include <iostream>
 #include <vector>
 #include <math.h>
-// #include <boolEvaluate_ext.cpp>
-// #include <kmap.cpp>
 
 //kmap soplver code below
 struct BoolVar {
@@ -243,16 +235,6 @@ class KarnaughMap {
 
     //For debugging purposes
     void print() {
-        // Cell *curr = first;
-        // while(curr != nullptr) {
-        //     cout << curr->name << flush;
-        //     for (int x = 0; x < curr->boolVars.size(); x++) {
-        //         curr->boolVars.at(x)->print();
-        //     }
-        //     cout << endl;
-        //     curr = curr->next;
-        // }
-        // 
         for (int x = 0; x < cells.size(); x++) {
             cout << cells.at(x)->name << " = " << cells.at(x)->value << " -> " << flush;
             for (int y = 0; y < cells.at(x)->adjacencies.size(); y++) {
@@ -332,7 +314,6 @@ class KarnaughMap {
 
                     //For every dimension
                         //For every group in working set, extend through current dimension
-                    //New solution========================================================
                     for (int x = 0; x < dimCount; x++) {
                         for (int y = 0; y < workingSetSize; y++) {
                             twoLong = (workingSet.at(y)->elements.at(0)->name == workingSet.at(y)->elements.at(0)->adjacencies.at(2*x)->adjacencies.at(2*x)->name);
@@ -699,32 +680,44 @@ int eval(string expression, vector<string> inputNames, vector<bool> inputVals) {
 };
 //Boolean Expression solver code above
 
-struct MooreState {
+struct State {
     string name;
     vector<int> qval;
-    vector<int> outputVals;
+    vector<vector<int>> outputVals;
+    vector<string> outputConditions;//For use with mealy machines
     vector<string> destinationNames;
-    vector<MooreState*> destinations;
+    vector<State*> destinations;
     vector<string> conditions;
 
-    MooreState(string enname, vector<int> enoutputs, vector<string> endestinationNames, vector<string> enconditions) {
+    //Moore state constructor
+    State(string enname, vector<int> enoutputs, vector<string> endestinationNames, vector<string> enconditions) {
+        name = enname;
+        outputVals = {enoutputs};
+        outputConditions.push_back("1");
+        destinationNames = endestinationNames;
+        conditions = enconditions;
+    }
+
+    //Mealy state constructor
+    State(string enname, vector<vector<int>> enoutputs, vector<string> enoutputConditions, vector<string> endestinationNames, vector<string> enconditions) {
         name = enname;
         outputVals = enoutputs;
+        outputConditions = enoutputConditions;
         destinationNames = endestinationNames;
         conditions = enconditions;
     }
 };
 
 class BubbleDiagram {
-    vector<MooreState*> states;
-    MooreState *startState;
+    vector<State*> states;
+    State *startState;
 
     public:
-    BubbleDiagram(MooreState* state) {
+    BubbleDiagram(State* state) {
         startState = state;
         states.push_back(state);
     }
-    void addState(MooreState* state) {
+    void addState(State* state) {
         states.push_back(state);
     }
     void formTransitions() {
@@ -756,33 +749,13 @@ int findValid(vector<string> conditions, vector<bool> inputs, vector<string> lis
             return x;
         }
     }
-
-    // string varName;
-    // for (int x = 0; x < listOfInputs.size(); x++) {
-    //     for (int y = 0; y < conditions.size(); y++) {
-    //         varName = conditions.at(y);
-    //         if (varName.at(0) == '~') {
-    //             varName.erase(0, 1);
-    //         }
-            
-    //         if (listOfInputs.at(x) == varName) {
-    //             if (conditions.at(y).at(0) == '~' && !inputs.at(0)) {
-    //                 return y;
-    //             }
-    //             else if (conditions.at(y).at(0) != '~' && inputs.at(0)) {
-    //                 return y;
-    //             }
-    //         }
-
-    //     }
-    // }
     return -1;
 };
 
 class StateTransitionTable {
     vector<string> inputs;//Input signal names
     vector<string> outputs;//Output signal names
-    vector<MooreState*> states;
+    vector<State*> states;
     vector<string> ffdata;//Outputs to be kmapped into functions for flip flop inputs
     vector<string> outputData;//Truth table data for output signals to be kmapped
     vector<string> inputExpressions;
@@ -845,8 +818,6 @@ class StateTransitionTable {
             for (int y = 0; y < maxNumOfStates; y++) {
                 //For every possible combination of inputs
                 for (int z = 0; z < pow(2, inputs.size()); z++) {
-                    //If next state is a placeholder state, push back 2 (don't care) NEED TO IMPLEMENT
-                    //Else if current state q val is different from next state q val, push back 1
                     try {
                         if (getNextStateQVal(x, y, z) == states.at(y)->qval.at(x)) {
                             data += "0";
@@ -876,9 +847,8 @@ class StateTransitionTable {
             for (int y = 0; y < maxNumOfStates; y++) {
                 //For every possible combination of inputs
                 for (int z = 0; z < pow(2, inputs.size()); z++) {
-                    //If next state is a placeholder state, push back 2 (don't care) NEED TO IMPLEMENT
-                    //Else if current state q val is different from next state q val, push back 1
                     if (ffType == "D" || ffType == "d") {
+                        // cout << x << " " << y << " " << z << endl;
                         try {
                             data += to_string(getNextStateQVal(x, y, z));
                         }
@@ -921,12 +891,33 @@ class StateTransitionTable {
                     }
                 }
             }
-            // cout << data << endl;
             ffdata.push_back(data);
             if (ffType == "JK" || ffType == "jk") {
                 ffdata.push_back(data2);
             }
         }
+    }
+
+    //Method to get the value of a particular output signal
+    int getOutputValue(int outputNum, int stateNum, int condition) {
+        vector<bool> inputValues;
+        int inputNum = inputs.size();
+        int posNum = pow(2, inputNum);
+        int step = posNum / 2;
+        bool value;
+        int num;
+        for (int x = 0; x < inputNum; x++) {
+            value = true;
+            num = -1;
+            while (num < condition) {
+                num += step;
+                value = !value;
+            }
+            inputValues.push_back(value);
+            step /= 2;
+        }
+        int result = states.at(stateNum)->outputVals.at(findValid(states.at(stateNum)->outputConditions, inputValues, inputs)).at(outputNum);
+        return result;
     }
     void getOutputData() {
         string data;
@@ -934,26 +925,26 @@ class StateTransitionTable {
         for (int x = 0; x < outputs.size(); x++) {  
             data = "";
             for (int y = 0; y < maxNumOfStates; y++) {
-                try {
-                    //Data value exists
-                    data += to_string(states.at(y)->outputVals.at(x));
-                }
-                catch (exception e) {
-                    //Data value was never entered by the user
-                    //Assume this value doesn't matter (i.e. a don't care)
-                    data += "2";
+                for (int z = 0; z < states.at(0)->outputConditions.size(); z++) {
+                    try {
+                        //Data value exists
+                        // data += to_string(states.at(y)->outputVals.at(z).at(x));
+                        data += to_string(getOutputValue(x, y, z));
+                    }
+                    catch (exception e) {
+                        //Data value was never entered by the user
+                        //Assume this value doesn't matter (i.e. a don't care)
+                        data += "2";
+                    }
                 }
             }
             outputData.push_back(data);
         }
-
-        // for (int x = 0; x < outputData.size(); x++) {
-        //     cout << outputData.at(x) << endl;
-        // }
     }
     void getInputExpressions() {
         vector<string> kmapInputs;
-        int ffnum = int(log2(states.size()));
+        int ffnum = ceil(log2(states.size()));
+        // cout << ffnum << endl;
         for (int x = ffnum - 1; x >= 0; x--) {
             kmapInputs.push_back("Q" + to_string(x));
         }
@@ -962,24 +953,21 @@ class StateTransitionTable {
 
         }
         for (int x = 0; x < ffdata.size(); x++) {
+            cout << ffdata.at(x) << endl;
             inputExpressions.push_back(simplify(kmapInputs, ffdata.at(x)));
         }
     }
     void getOutputExpressions() {
         vector<string> kmapInputs;
-        int ffnum = int(log2(states.size()));
+        int ffnum = ceil(log2(states.size()));
+        cout << ffnum << endl;
         for (int x = ffnum - 1; x >= 0; x--) {
             kmapInputs.push_back("Q" + to_string(x));
         }
-        // for (int x = 0; x < outputs.size(); x++) {
-        //     kmapInputs.push_back(outputs.at(x));
-        // }
+        for (int x = 0; x < inputs.size(); x++) {
+            kmapInputs.push_back(inputs.at(x));
+        }
         for (int x = 0; x < outputData.size(); x++) {
-            // cout << outputData.at(x) << endl;
-            // for (int y = 0; y < kmapInputs.size(); y++) {
-            //     cout << kmapInputs.at(y) << flush;
-            // }
-            // cout << endl;
             outputExpressions.push_back(simplify(kmapInputs, outputData.at(x)));
         }
     }
@@ -1002,7 +990,7 @@ class StateTransitionTable {
             cout << outputs.at(x) << ":\t" << outputExpressions.at(x) << endl;
         }
     }
-    StateTransitionTable(vector<string> eninputs, vector<string> enOutputs, vector<MooreState*> enstates) {
+    StateTransitionTable(vector<string> eninputs, vector<string> enOutputs, vector<State*> enstates) {
         inputs = eninputs;
         outputs = enOutputs;
         states = enstates;
@@ -1010,76 +998,65 @@ class StateTransitionTable {
 
 };
 
-int main() {
-    MooreState *a;
-    MooreState *b;
-    MooreState *c;
-    // MooreState *d;
-    MooreState *e;
-    MooreState *f;
-    MooreState *g;
-    MooreState *h;
-
-    //Basic circular FSM
-    //Advances when input is high, freezes when input is low
-    // a = new MooreState("a", {0, 0}, {"a", "b"}, {"~in", "in"});
-    // b = new MooreState("b", {0, 1}, {"b", "c"}, {"~in", "in"});
-    // c = new MooreState("c", {1, 0}, {"c", "d"}, {"~in", "in"});
-    // d = new MooreState("d", {1, 1}, {"d", "a"}, {"~in", "in"});
-
-    // a->qval = {0, 0};
-    // b->qval = {0, 1};
-    // c->qval = {1, 0};
-    // d->qval = {1, 1};
-
-    //8 Digit up counter
-    a = new MooreState("a", {0, 0, 0}, {"b"}, {"1"});
-    b = new MooreState("b", {0, 0, 1}, {"c"}, {"1"});
-    c = new MooreState("c", {0, 1, 0}, {"e"}, {"1"});
-    // d = new MooreState("d", {0, 1, 1}, {"e"}, {"1"});
-    e = new MooreState("e", {0, 1, 1}, {"f"}, {"1"});
-    f = new MooreState("f", {1, 0, 0}, {"g"}, {"1"});
-    g = new MooreState("g", {1, 0, 1}, {"h"}, {"1"});
-    h = new MooreState("h", {1, 1, 0}, {"a"}, {"1"});
-
-    a->qval = {0, 0, 0};
-    b->qval = {0, 0, 1};
-    c->qval = {0, 1, 0};
-    // d->qval = {0, 1, 1};
-    e->qval = {0, 1, 1};
-    f->qval = {1, 0, 0};
-    g->qval = {1, 0, 1};
-    h->qval = {1, 1, 0};
-    
-
-    BubbleDiagram *bd;
-    bd = new BubbleDiagram(a);
-    bd->addState(b);
-    bd->addState(c);
-    // bd->addState(d);
-    bd->addState(e);
-    bd->addState(f);
-    bd->addState(g);
-    bd->addState(h);
-
+void make_fsm(vector<State*> states, vector<string> inputSignals, vector<string> outputSignals, string flipflip_type) {
+    //Add q values to states
+    int qvalnum = ceil(log2(states.size()));
+    bool value = 0;
+    int step = pow(2, qvalnum - 1);
+    int step_reference = step;
+    for (int a = 0; a < qvalnum; a++) {
+        for (int x = 0; x < states.size(); x++) {
+            if (step > 0) {
+                step--;
+            }
+            else {
+                step = step_reference - 1;
+                value = !value;
+            }
+            states.at(x)->qval.push_back(value);
+        }
+        step = step_reference;
+        step /= 2;
+        step_reference /= 2;
+        value = 0;
+    }
+    BubbleDiagram *bd = new BubbleDiagram(states.at(0));
+    for (int x = 1; x < states.size(); x++) {
+        bd->addState(states.at(x));
+    }
     bd->formTransitions();
-
-    // bd->print();
-
-    //Get truth tables for input logic functions
-
-
-    // vector<string> inputs = {"in"};
-    // int statenum = 17;
-    // int ffnum = ceil(log2(statenum));
-    // cout << ffnum << endl;
-
-    StateTransitionTable *stt = new StateTransitionTable({}, {"Z2", "Z1", "Z0"}, {a, b, c, e, f, g, h});
-    // stt->getInputDataT();
-    stt->getInputData("JK");
+    StateTransitionTable *stt = new StateTransitionTable(inputSignals, outputSignals, states);
+    stt->getInputData(flipflip_type);
     stt->getInputExpressions();
     stt->getOutputData();
     stt->getOutputExpressions();
-    stt->printSolution("JK");
-    // cout << findValid({"~in", "in"}, {true}, {"in"}) << flush;
+    stt->printSolution(flipflip_type);
+}
+
+int main() {
+    //Instructions====================================================================
+    //Define each state:
+        //Can be either mealy opr moore style
+        //For moore, simply add state name, output signal values (in same order as output signal names entered in make_fsm), next states, and the conditions to go to the next states (order dependant)
+        //For moore, include output values for each desired possibility of input values
+    //Call 'make_fsm' on your states, input signal names, output signal names, and desired type of flip flop
+    //Desired order of input and output signal names (i.e. to use binary to represent letters or numbers for ex) must line up
+    //Instructions====================================================================
+    
+    //Example: basic up counter 
+    // State *a = new State("a", {0, 0, 0}, {"b"}, {"1"});
+    // State *b = new State("b", {0, 0, 1}, {"c"}, {"1"});
+    // State *c = new State("c", {0, 1, 0}, {"e"}, {"1"});
+    // State *d = new State("d", {0, 1, 1}, {"e"}, {"1"});
+    // State *e = new State("e", {1, 0, 0}, {"f"}, {"1"});
+    // State *f = new State("f", {1, 0, 1}, {"g"}, {"1"});
+    // State *g = new State("g", {1, 1, 0}, {"h"}, {"1"});
+    // State *h = new State("h", {1, 1, 1}, {"a"}, {"1"});
+    // make_fsm({a, b, c, e, f, g, h}, {}, {"Z2", "Z1", "Z0"}, "D");
+
+    //Example: mealy machine
+    // State *x = new State("a", {{0}, {0}}, {"~in", "in"}, {"b"}, {"1"});
+    // State *y = new State("b", {{0}, {0}}, {"~in", "in"}, {"c"}, {"1"});
+    // State *z = new State("c", {{0}, {1}}, {"~in", "in"}, {"a"}, {"1"});
+    // make_fsm({x, y, z}, {"in"}, {"Z0"}, "D");
 };

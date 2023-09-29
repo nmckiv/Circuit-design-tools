@@ -1,4 +1,4 @@
-//Extension to solve a boolean expression given the input data
+//Program to evaluate a boolean expression given the input values for each variable
 using namespace std;
 #include <string>
 #include <iostream>
@@ -179,6 +179,7 @@ int eval(string expression, vector<string> inputNames, vector<int> inputVals) {
     return makeList(makeMathExp(expression, inputNames, inputVals));
 };
 
-// int main() {
-//     cout << solve("~ab(c+d)", {"a", "b", "c", "d"}, {0, 0, 1, 1}) << endl;
-// }
+int main() {
+    //Example
+    cout << eval("~ab(c+d)", {"a", "b", "c", "d"}, {0, 0, 1, 1}) << endl;
+}

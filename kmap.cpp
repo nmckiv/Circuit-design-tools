@@ -484,6 +484,21 @@ class KarnaughMap {
 //Program components listed above:
 
 int main(int argc, char* argv[]) {
+    //Instructions:  Enter truth table in command lne arguments
+    //Format: (form) ("tt" for truth table) (list of variables) ('f' for function) (lis tout outputs if inputs are in ascending binary order)
+    //Ex: for the following
+    // a b c f
+    // 0 0 0 1
+    // 0 0 1 0
+    // 0 1 0 0
+    // 0 1 1 0
+    // 1 0 0 1
+    // 1 0 1 1
+    // 1 1 0 1
+    // 1 1 1 0
+    //Command line arguments to execute and solve in SOP format would be:
+    // ./a.exe sop tt a b c f 1 0 0 0 1 1 1 0
+
     //Find desired simplification method (SOP or POS)
     //Build truth table
     //Make k-map out of truth table
