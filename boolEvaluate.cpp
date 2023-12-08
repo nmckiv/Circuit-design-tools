@@ -1,4 +1,7 @@
 //Program to evaluate a boolean expression given the input values for each variable
+//Expression to solve for must be hard-coded in main
+//Prints result of the expression
+
 using namespace std;
 #include <string>
 #include <iostream>
@@ -13,7 +16,6 @@ struct charElement {
         value = enValue;
     }
 };
-
 
 
 int solve(charElement* start, charElement* end) {
@@ -180,6 +182,6 @@ int eval(string expression, vector<string> inputNames, vector<int> inputVals) {
 };
 
 int main() {
-    //Example
-    cout << eval("~ab(c+d)", {"a", "b", "c", "d"}, {0, 0, 1, 1}) << endl;
+    //Argument order: (expression), (variables), (corresponding variable values)
+    cout << eval("~ab(c+d)", {"a", "b", "c", "d"}, {0, 1, 1, 0}) << endl;
 }

@@ -1,6 +1,22 @@
-//3rd prototype version of a program to utilize Karnaugh Maps to simplify truth tables or boolean expressions
-//Desired functionality: can accept a user-entered boolean expression, truth table, or K-map with an unlimited number of variables
-//Simplifies to SOP or POS form
+//Program to utilize Karnaugh Mapping to simplify truth tables or boolean expressions
+//Accepts a user-entered truth table and simplifies to SOP or POS form
+
+//To run: pass in truth table as command line arguments in the following format:
+//(run command) ("sop" or "pos") ("tt" to indicate truth table) (variable list seperated by spaces) ("f" to denote end of variables) (list of 1, 0, or d for don't care units)
+
+//Example: ./a.exe sop tt a b c f 1 1 0 1 0 d d 1
+//Solves for the following truth table:
+// a b c | f
+// 0 0 0 | 1
+// 0 0 1 | 1
+// 0 1 0 | 0
+// 0 1 1 | 1
+// 1 0 0 | 0
+// 1 0 1 | d
+// 1 1 0 | d
+// 1 1 1 | 1
+
+//And yields ~a~b + c
 
 #include <string>
 #include <vector>
@@ -66,7 +82,6 @@ struct Group {
         int size = elements.size();
         for (int x = 0; x < size; x++) {
             cout << elements.at(x)->name << " " << flush;
-            // cout << elements.at(x)->name << " " << elements.at(x)->groupsIn << flush;
         }
         cout << endl;
     }
@@ -235,16 +250,6 @@ class KarnaughMap {
 
     //For debugging purposes
     void print() {
-        // Cell *curr = first;
-        // while(curr != nullptr) {
-        //     cout << curr->name << flush;
-        //     for (int x = 0; x < curr->boolVars.size(); x++) {
-        //         curr->boolVars.at(x)->print();
-        //     }
-        //     cout << endl;
-        //     curr = curr->next;
-        // }
-        // 
         for (int x = 0; x < cells.size(); x++) {
             cout << cells.at(x)->name << " = " << cells.at(x)->value << " -> " << flush;
             for (int y = 0; y < cells.at(x)->adjacencies.size(); y++) {
@@ -321,10 +326,6 @@ class KarnaughMap {
                     workingSet.push_back((new Group(curr)));
                     curr->groupsIn++; workingSetSize++;
                     //Extend all groups in working set through every dimension
-
-                    //For every dimension
-                        //For every group in working set, extend through current dimension
-                    //New solution========================================================
                     for (int x = 0; x < dimCount; x++) {
                         for (int y = 0; y < workingSetSize; y++) {
                             twoLong = (workingSet.at(y)->elements.at(0)->name == workingSet.at(y)->elements.at(0)->adjacencies.at(2*x)->adjacencies.at(2*x)->name);
@@ -367,7 +368,6 @@ class KarnaughMap {
                         }
                         workingSetSize = workingSet.size();
                     }
-                    //====================================================================
                 for (int x = 0; x < workingSet.size(); x++) {
                     groups.push_back(workingSet.at(x));
                 }
@@ -481,11 +481,11 @@ class KarnaughMap {
 
 //A collection of cells to form the kmap
 
-//Program components listed above:
+//Program components listed above
 
 int main(int argc, char* argv[]) {
     //Instructions:  Enter truth table in command lne arguments
-    //Format: (form) ("tt" for truth table) (list of variables) ('f' for function) (lis tout outputs if inputs are in ascending binary order)
+    //Format: (form) ("tt" for truth table) (list of variables) ('f' for function) (list out outputs if inputs are in ascending binary order)
     //Ex: for the following
     // a b c f
     // 0 0 0 1
@@ -499,11 +499,21 @@ int main(int argc, char* argv[]) {
     //Command line arguments to execute and solve in SOP format would be:
     // ./a.exe sop tt a b c f 1 0 0 0 1 1 1 0
 
+    //Methodology
     //Find desired simplification method (SOP or POS)
     //Build truth table
     //Make k-map out of truth table
     //Solve k-map to find solution
     //Print solutiuon
+
+    //First check if input is only one variable, in which case solve and return
+    if (argv[4][0] == 'f') { 
+        if (argv[5][0] == '0' || argv[5][0] == 'd') {
+            cout << '~';
+        }
+        cout << argv[3][0] << endl;
+        return 0;
+    }
 
     //Establish desired method (1 means SOP, 2 means POS)
     int method;

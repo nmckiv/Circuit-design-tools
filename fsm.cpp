@@ -1,8 +1,6 @@
-//V1
 //Program to provide input and output logic for a finite state machine
-//Desired functionality: Accepts a user description of the desired states, inputs, outputs, and transition conditions in either mealy or moore format
-//Returns flip-flop input and output logic
-//User declares whether to use D, T, or JK flip flops
+//A description of the desired states, inputs, outputs, and transition conditions must be hard-coded in main
+//Prints out flip-flop input and output logic
 
 using namespace std;
 #include <string>
@@ -690,21 +688,21 @@ struct State {
     vector<string> conditions;
 
     //Moore state constructor
-    State(string enname, vector<int> enoutputs, vector<string> endestinationNames, vector<string> enconditions) {
-        name = enname;
-        outputVals = {enoutputs};
+    State(string name, vector<int> outputs, vector<string> destinationNames, vector<string> conditions) {
+        this->name = name;
+        outputVals = {outputs};
         outputConditions.push_back("1");
-        destinationNames = endestinationNames;
-        conditions = enconditions;
+        this->destinationNames = destinationNames;
+        this->conditions = conditions;
     }
 
     //Mealy state constructor
-    State(string enname, vector<vector<int>> enoutputs, vector<string> enoutputConditions, vector<string> endestinationNames, vector<string> enconditions) {
-        name = enname;
-        outputVals = enoutputs;
-        outputConditions = enoutputConditions;
-        destinationNames = endestinationNames;
-        conditions = enconditions;
+    State(string name, vector<vector<int>> outputs, vector<string> outputConditions, vector<string> destinationNames, vector<string> conditions) {
+        this->name = name;
+        outputVals = outputs;
+        this->outputConditions = outputConditions;
+        this->destinationNames = destinationNames;
+        this->conditions = conditions;
     }
 };
 
@@ -953,14 +951,12 @@ class StateTransitionTable {
 
         }
         for (int x = 0; x < ffdata.size(); x++) {
-            cout << ffdata.at(x) << endl;
             inputExpressions.push_back(simplify(kmapInputs, ffdata.at(x)));
         }
     }
     void getOutputExpressions() {
         vector<string> kmapInputs;
         int ffnum = ceil(log2(states.size()));
-        cout << ffnum << endl;
         for (int x = ffnum - 1; x >= 0; x--) {
             kmapInputs.push_back("Q" + to_string(x));
         }
@@ -1036,23 +1032,25 @@ void make_fsm(vector<State*> states, vector<string> inputSignals, vector<string>
 int main() {
     //Instructions====================================================================
     //Define each state:
-        //Can be either mealy opr moore style
+        //Can be either mealy or moore style
         //For moore, simply add state name, output signal values (in same order as output signal names entered in make_fsm), next states, and the conditions to go to the next states (order dependant)
-        //For moore, include output values for each desired possibility of input values
+        //For mealy, include output values for each desired possibility of input values
     //Call 'make_fsm' on your states, input signal names, output signal names, and desired type of flip flop
     //Desired order of input and output signal names (i.e. to use binary to represent letters or numbers for ex) must line up
     //Instructions====================================================================
-    
+    //State argument format: (name), (output signals), (destinations), (transition conditions)
+    //make_fsm arguments format: (states), (input signals), (output signals), (type of flip flop i.e. D, T, or JK)
+    //Related arguments (ex. destinations and transition conditions) must appear in the same order when passed in as vectors
     //Example: basic up counter 
-    // State *a = new State("a", {0, 0, 0}, {"b"}, {"1"});
-    // State *b = new State("b", {0, 0, 1}, {"c"}, {"1"});
-    // State *c = new State("c", {0, 1, 0}, {"e"}, {"1"});
-    // State *d = new State("d", {0, 1, 1}, {"e"}, {"1"});
-    // State *e = new State("e", {1, 0, 0}, {"f"}, {"1"});
-    // State *f = new State("f", {1, 0, 1}, {"g"}, {"1"});
-    // State *g = new State("g", {1, 1, 0}, {"h"}, {"1"});
-    // State *h = new State("h", {1, 1, 1}, {"a"}, {"1"});
-    // make_fsm({a, b, c, e, f, g, h}, {}, {"Z2", "Z1", "Z0"}, "D");
+    State *a = new State("a", {0, 0, 0}, {"b"}, {"ab"});
+    State *b = new State("b", {0, 0, 1}, {"c"}, {"1"});
+    State *c = new State("c", {0, 1, 0}, {"e"}, {"1"});
+    State *d = new State("d", {0, 1, 1}, {"e"}, {"1"});
+    State *e = new State("e", {1, 0, 0}, {"f"}, {"1"});
+    State *f = new State("f", {1, 0, 1}, {"g"}, {"1"});
+    State *g = new State("g", {1, 1, 0}, {"h"}, {"1"});
+    State *h = new State("h", {1, 1, 1}, {"a"}, {"1"});
+    make_fsm({a, b, c, e, f, g, h}, {}, {"Z2", "Z1", "Z0"}, "D");
 
     //Example: mealy machine
     // State *x = new State("a", {{0}, {0}}, {"~in", "in"}, {"b"}, {"1"});
